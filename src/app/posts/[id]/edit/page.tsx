@@ -71,6 +71,9 @@ export default function EditPostPage() {
   const [content, setContent] = useState('');
   const [useRich, setUseRich] = useState(true);
 
+  const formatHtml = (html: string) => html.replace(/<\/p><p/g, '</p>\n<p');
+  const unformatHtml = (html: string) => html.replace(/<\/p>\n<p/g, '</p><p');
+
   const editor = useEditor({
     extensions: [StarterKit],
     content,
@@ -78,13 +81,13 @@ export default function EditPostPage() {
     // by explicitly disabling immediate rendering as recommended by Tiptap.
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      setContent(editor.getHTML());
+      setContent(formatHtml(editor.getHTML()));
     },
   });
 
   useEffect(() => {
     if (useRich && editor) {
-      editor.commands.setContent(content);
+      editor.commands.setContent(unformatHtml(content));
     }
     // We intentionally omit `content` from deps to avoid an update loop when
     // typing in the rich editor.
@@ -98,7 +101,7 @@ export default function EditPostPage() {
         const post = posts.find(p => p.id === Number(params.id));
         if (post) {
           setTitle(post.title);
-          setContent(post.content);
+          setContent(formatHtml(post.content));
           editor?.commands.setContent(post.content);
         }
       })
@@ -110,7 +113,7 @@ export default function EditPostPage() {
     await fetch('/api/posts', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: Number(params.id), title, content }),
+      body: JSON.stringify({ id: Number(params.id), title, content: unformatHtml(content) }),
     });
     setLoading(false);
     router.push('/posts');
