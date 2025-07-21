@@ -1,8 +1,60 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+
+function MenuBar({ editor }: { editor: Editor | null }) {
+  if (!editor) return null;
+  const buttonClass = (active: boolean) =>
+    `px-2 py-1 rounded border border-border text-sm ${active ? 'bg-primary text-white' : ''}`;
+  return (
+    <div className="flex gap-2 mb-2 border-b border-border pb-2">
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        className={buttonClass(editor.isActive('bold'))}
+      >
+        Bold
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        className={buttonClass(editor.isActive('italic'))}
+      >
+        Italic
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        className={buttonClass(editor.isActive('strike'))}
+      >
+        Strike
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().setParagraph().run()}
+        className={buttonClass(editor.isActive('paragraph'))}
+      >
+        P
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        className={buttonClass(editor.isActive('heading', { level: 1 }))}
+      >
+        H1
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        className={buttonClass(editor.isActive('heading', { level: 2 }))}
+      >
+        H2
+      </button>
+    </div>
+  );
+}
 
 interface Post {
   id: number;
@@ -17,6 +69,7 @@ export default function EditPostPage() {
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState('');
+  const [useRich, setUseRich] = useState(true);
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -28,6 +81,15 @@ export default function EditPostPage() {
       setContent(editor.getHTML());
     },
   });
+
+  useEffect(() => {
+    if (useRich && editor) {
+      editor.commands.setContent(content);
+    }
+    // We intentionally omit `content` from deps to avoid an update loop when
+    // typing in the rich editor.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useRich, editor]);
 
   useEffect(() => {
     fetch('/api/posts')
@@ -66,10 +128,42 @@ export default function EditPostPage() {
           onChange={e => setTitle(e.target.value)}
           placeholder="タイトル"
         />
-        <div className="bg-white dark:bg-slate-800 border border-border rounded-lg p-2">
-          <EditorContent editor={editor} className="min-h-[300px]" />
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setUseRich(true)}
+            className={`px-3 py-1 rounded-lg border border-border text-sm ${useRich ? 'bg-primary text-white' : 'bg-background'}`}
+          >
+            リッチエディタ
+          </button>
+          <button
+            type="button"
+            onClick={() => setUseRich(false)}
+            className={`px-3 py-1 rounded-lg border border-border text-sm ${!useRich ? 'bg-primary text-white' : 'bg-background'}`}
+          >
+            HTMLエディタ
+          </button>
         </div>
-        <div className="prose max-w-none bg-card-bg p-4 rounded-lg border border-border" dangerouslySetInnerHTML={{ __html: content }} />
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-slate-800 border border-border rounded-lg p-2">
+            {useRich ? (
+              <>
+                <MenuBar editor={editor} />
+                <EditorContent editor={editor} className="min-h-[300px]" />
+              </>
+            ) : (
+              <textarea
+                className="w-full min-h-[300px] p-2 bg-background border border-border rounded-lg"
+                value={content}
+                onChange={e => setContent(e.target.value)}
+              />
+            )}
+          </div>
+          <div className="prose max-w-none bg-card-bg p-4 rounded-lg border border-border">
+            <h2 className="mt-0">{title}</h2>
+            <div dangerouslySetInnerHTML={{ __html: content }} />
+          </div>
+        </div>
         <button
           className="px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50"
           onClick={save}
