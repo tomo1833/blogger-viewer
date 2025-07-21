@@ -255,7 +255,7 @@ export default function PostsPage() {
                     </button>
                   </div>
 
-                  <div className={`prose prose-sm max-w-none transition-all duration-300 ${
+                  <div className={`blog-post-item-body-wrapper prose prose-sm max-w-none transition-all duration-300 ${
                     expandedPosts.has(post.id) ? 'max-h-none' : 'max-h-32 overflow-hidden'
                   }`}>
                     <div dangerouslySetInnerHTML={{ __html: post.content }} className="text-foreground" />
