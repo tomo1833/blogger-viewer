@@ -1,4 +1,5 @@
 import db from './db';
+import { fetchCommentsFromBlogger } from './comments';
 
 export interface Post {
   id?: number;
@@ -65,5 +66,6 @@ export async function fetchFromBlogger(apiKey: string, blogId: string): Promise<
     }
   });
   insertMany(posts);
+  await fetchCommentsFromBlogger(apiKey, blogId);
   return getAllPosts();
 }
