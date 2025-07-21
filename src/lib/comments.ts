@@ -1,4 +1,5 @@
 import db from './db';
+import { sleep } from './utils';
 
 export interface Comment {
   id?: number;
@@ -32,21 +33,47 @@ export async function fetchCommentsFromBlogger(apiKey: string, blogId: string): 
 
   const allComments: Comment[] = [];
   for (const post of posts) {
-    const res = await fetch(
-      `https://www.googleapis.com/blogger/v3/blogs/${blogId}/posts/${post.bloggerId}/comments?key=${apiKey}`
-    );
-    if (!res.ok) throw new Error('Failed to fetch comments from Blogger');
-    const data: { items?: { id: string; content: string; published: string; updated: string; author?: { displayName?: string } }[] } = await res.json();
-    const comments: Comment[] = (data.items || []).map(item => ({
-      postId: post.id,
-      bloggerCommentId: item.id,
-      author: item.author?.displayName || '',
-      content: item.content,
-      published: item.published,
-      updated: item.updated,
-    }));
-    insertMany(comments);
-    allComments.push(...comments);
+    let pageToken: string | undefined;
+    do {
+      const url = new URL(
+        `https://www.googleapis.com/blogger/v3/blogs/${blogId}/posts/${post.bloggerId}/comments`
+      );
+      url.searchParams.set('key', apiKey);
+      url.searchParams.set(
+        'fields',
+        'nextPageToken,items(id,content,published,updated,author/displayName)'
+      );
+      if (pageToken) url.searchParams.set('pageToken', pageToken);
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch comments from Blogger');
+      const data: {
+        nextPageToken?: string;
+        items?: {
+          id: string;
+          content: string;
+          published: string;
+          updated: string;
+          author?: { displayName?: string };
+        }[];
+      } = await res.json();
+
+      const comments: Comment[] = (data.items || []).map(item => ({
+        postId: post.id,
+        bloggerCommentId: item.id,
+        author: item.author?.displayName || '',
+        content: item.content,
+        published: item.published,
+        updated: item.updated,
+      }));
+      insertMany(comments);
+      allComments.push(...comments);
+      pageToken = data.nextPageToken;
+      if (pageToken) {
+        await sleep(1000);
+      }
+    } while (pageToken);
+    await sleep(1000);
   }
   return getComments();
 }

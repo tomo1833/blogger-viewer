@@ -1,5 +1,6 @@
 import db from './db';
 import { fetchCommentsFromBlogger } from './comments';
+import { sleep } from './utils';
 
 export interface Post {
   id?: number;
@@ -43,20 +44,14 @@ export function deletePost(id: number): void {
   db.prepare('DELETE FROM posts WHERE id=?').run(id);
 }
 
-export async function fetchFromBlogger(apiKey: string, blogId: string): Promise<Post[]> {
-  const res = await fetch(
-    `https://www.googleapis.com/blogger/v3/blogs/${blogId}/posts?key=${apiKey}`
-  );
-  if (!res.ok) throw new Error('Failed to fetch from Blogger');
-  const data: { items: { id: string; title: string; content: string; url: string; published: string; updated: string }[] } = await res.json();
-  const posts: Post[] = data.items.map((item) => ({
-    bloggerId: item.id,
-    title: item.title,
-    content: item.content,
-    url: item.url,
-    published: item.published,
-    updated: item.updated,
-  }));
+export async function fetchFromBlogger(
+  apiKey: string,
+  blogId: string,
+  fetchAll = false
+): Promise<Post[]> {
+  const allPosts: Post[] = [];
+  let pageToken: string | undefined;
+
   const insert = db.prepare(
     'INSERT OR IGNORE INTO posts (bloggerId, title, content, url, published, updated) VALUES (?, ?, ?, ?, ?, ?)'
   );
@@ -65,7 +60,48 @@ export async function fetchFromBlogger(apiKey: string, blogId: string): Promise<
       insert.run(p.bloggerId, p.title, p.content, p.url, p.published, p.updated);
     }
   });
-  insertMany(posts);
+
+  do {
+    const url = new URL(
+      `https://www.googleapis.com/blogger/v3/blogs/${blogId}/posts`
+    );
+    url.searchParams.set('key', apiKey);
+    url.searchParams.set(
+      'fields',
+      'nextPageToken,items(id,title,content,url,published,updated)'
+    );
+    if (pageToken) url.searchParams.set('pageToken', pageToken);
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to fetch from Blogger');
+    const data: {
+      nextPageToken?: string;
+      items?: {
+        id: string;
+        title: string;
+        content: string;
+        url: string;
+        published: string;
+        updated: string;
+      }[];
+    } = await res.json();
+
+    const posts: Post[] = (data.items || []).map(item => ({
+      bloggerId: item.id,
+      title: item.title,
+      content: item.content,
+      url: item.url,
+      published: item.published,
+      updated: item.updated,
+    }));
+    insertMany(posts);
+    allPosts.push(...posts);
+    pageToken = data.nextPageToken;
+    if (fetchAll && pageToken) {
+      await sleep(1000);
+    }
+  } while (fetchAll && pageToken);
+
   await fetchCommentsFromBlogger(apiKey, blogId);
   return getAllPosts();
 }

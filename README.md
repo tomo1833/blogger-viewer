@@ -10,6 +10,10 @@ and displayed.
 Create an `.env.local` file using `.env.example` and set your `BLOGGER_API_KEY`
 and `BLOGGER_BLOG_ID` to import posts and comments from Blogger.
 
+To retrieve all posts from the very beginning, send a request to
+`/api/posts?refresh=1&fetchAll=1`. The server will paginate through the Blogger
+API with small delays between requests to minimize load.
+
 ## Getting Started
 
 First, run the development server:
