@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 interface Post {
   id: number;
@@ -244,7 +245,7 @@ export default function PostsPage() {
                         )}
                       </div>
                     </div>
-                    <button 
+                    <button
                       className="ml-4 px-3 py-1 text-sm text-error hover:bg-error/10 rounded-lg transition-colors duration-200 flex items-center gap-1"
                       onClick={() => remove(post.id)}
                     >
@@ -253,6 +254,15 @@ export default function PostsPage() {
                       </svg>
                       削除
                     </button>
+                    <Link
+                      href={`/posts/${post.id}/edit`}
+                      className="ml-2 px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors duration-200 flex items-center gap-1"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 013.536 3.536L6 21l-4 1 1-4L16.732 3.732z" />
+                      </svg>
+                      編集
+                    </Link>
                   </div>
 
                   <div className={`blog-post-item-body-wrapper prose prose-sm max-w-none transition-all duration-300 ${
