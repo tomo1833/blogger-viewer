@@ -23,7 +23,14 @@ export function getComments(postId?: number): Comment[] {
 export async function fetchCommentsFromBlogger(apiKey: string, blogId: string): Promise<Comment[]> {
   const posts = db.prepare('SELECT id, bloggerId FROM posts').all() as { id: number; bloggerId: string }[];
   const insert = db.prepare(
-    'INSERT OR IGNORE INTO comments (postId, bloggerCommentId, author, content, published, updated) VALUES (?, ?, ?, ?, ?, ?)'
+    `INSERT INTO comments (postId, bloggerCommentId, author, content, published, updated)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(bloggerCommentId) DO UPDATE SET
+       postId=excluded.postId,
+       author=excluded.author,
+       content=excluded.content,
+       published=excluded.published,
+       updated=excluded.updated`
   );
   const insertMany = db.transaction((items: Comment[]) => {
     for (const c of items) {
