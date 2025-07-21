@@ -21,6 +21,9 @@ export default function EditPostPage() {
   const editor = useEditor({
     extensions: [StarterKit],
     content,
+    // Avoid hydration mismatches when this component is rendered on the server
+    // by explicitly disabling immediate rendering as recommended by Tiptap.
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       setContent(editor.getHTML());
     },
