@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Blogger Viewer
+
+This project demonstrates how to fetch posts from the Blogger API and store them
+in a local SQLite database. Posts can be listed, created and deleted through the
+UI under `/posts`.
+
+Create an `.env.local` file using `.env.example` and set your `BLOGGER_API_KEY`
+and `BLOGGER_BLOG_ID` to import posts from Blogger.
+
 ## Getting Started
 
 First, run the development server:
