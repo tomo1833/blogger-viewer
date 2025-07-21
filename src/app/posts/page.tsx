@@ -8,8 +8,17 @@ interface Post {
   published: string;
 }
 
+interface Comment {
+  id: number;
+  postId: number;
+  author: string;
+  content: string;
+  published: string;
+}
+
 export default function PostsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [comments, setComments] = useState<Record<number, Comment[]>>({});
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
@@ -19,10 +28,25 @@ export default function PostsPage() {
       .then(setPosts);
   }, []);
 
+  useEffect(() => {
+    posts.forEach(p => {
+      fetch(`/api/comments?postId=${p.id}`)
+        .then(res => res.json())
+        .then(data =>
+          setComments(prev => ({ ...prev, [p.id]: data as Comment[] }))
+        );
+    });
+  }, [posts]);
+
   const refresh = () => {
     fetch('/api/posts?refresh=1')
       .then(res => res.json())
-      .then(setPosts);
+      .then(setPosts)
+      .then(() => {
+        fetch('/api/comments?refresh=1').then(() => {
+          setComments({});
+        });
+      });
   };
 
   const create = async () => {
@@ -73,6 +97,16 @@ export default function PostsPage() {
               Delete
             </button>
             <div dangerouslySetInnerHTML={{ __html: p.content }} />
+            {comments[p.id] && (
+              <ul className="ml-4 mt-2 space-y-2">
+                {comments[p.id].map(c => (
+                  <li key={c.id} className="border p-2">
+                    <div className="text-sm text-gray-700">{c.author}</div>
+                    <div dangerouslySetInnerHTML={{ __html: c.content }} />
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ul>

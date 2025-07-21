@@ -3,7 +3,7 @@ import path from 'path';
 
 const db = new Database(path.join(process.cwd(), 'blog.db'));
 
-// Ensure posts table exists
+// Ensure posts and comments tables exist
 const init = `
 CREATE TABLE IF NOT EXISTS posts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -13,6 +13,16 @@ CREATE TABLE IF NOT EXISTS posts (
   url TEXT,
   published TEXT,
   updated TEXT
+);
+CREATE TABLE IF NOT EXISTS comments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  postId INTEGER,
+  bloggerCommentId TEXT UNIQUE,
+  author TEXT,
+  content TEXT,
+  published TEXT,
+  updated TEXT,
+  FOREIGN KEY(postId) REFERENCES posts(id)
 );`;
 
 db.exec(init);
