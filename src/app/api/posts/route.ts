@@ -7,7 +7,8 @@ export async function GET(req: NextRequest) {
   if (refresh) {
     const apiKey = process.env.BLOGGER_API_KEY || '';
     const blogId = process.env.BLOGGER_BLOG_ID || '';
-    const posts = await fetchFromBlogger(apiKey, blogId);
+    const fetchAll = searchParams.get('fetchAll') === '1';
+    const posts = await fetchFromBlogger(apiKey, blogId, fetchAll);
     return NextResponse.json(posts);
   }
   return NextResponse.json(getAllPosts());

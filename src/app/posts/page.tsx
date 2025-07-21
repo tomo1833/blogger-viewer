@@ -49,6 +49,17 @@ export default function PostsPage() {
       });
   };
 
+  const fullRefresh = () => {
+    fetch('/api/posts?refresh=1&fetchAll=1')
+      .then(res => res.json())
+      .then(setPosts)
+      .then(() => {
+        fetch('/api/comments?refresh=1').then(() => {
+          setComments({});
+        });
+      });
+  };
+
   const create = async () => {
     const res = await fetch('/api/posts', {
       method: 'POST',
@@ -71,6 +82,12 @@ export default function PostsPage() {
       <h1 className="text-xl font-bold">Posts</h1>
       <button className="bg-blue-500 text-white px-2 py-1" onClick={refresh}>
         Refresh from Blogger
+      </button>
+      <button
+        className="bg-blue-500 text-white px-2 py-1 ml-2"
+        onClick={fullRefresh}
+      >
+        Full Sync from Start
       </button>
       <div className="space-y-2">
         <input
