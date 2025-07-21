@@ -124,6 +124,7 @@ export default function EditPostPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900 p-8">
       <div className="max-w-screen-2xl mx-auto space-y-6">
+
         <h1 className="text-3xl font-bold mb-4">記事を編集</h1>
         <input
           className="w-full px-4 py-2 border border-border rounded-lg"
@@ -157,6 +158,7 @@ export default function EditPostPage() {
             ) : (
               <textarea
                 className="w-full min-h-[700px] p-2 bg-background border border-border rounded-lg"
+
                 value={content}
                 onChange={e => setContent(e.target.value)}
               />
