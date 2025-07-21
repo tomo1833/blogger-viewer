@@ -53,7 +53,14 @@ export async function fetchFromBlogger(
   let pageToken: string | undefined;
 
   const insert = db.prepare(
-    'INSERT OR IGNORE INTO posts (bloggerId, title, content, url, published, updated) VALUES (?, ?, ?, ?, ?, ?)'
+    `INSERT INTO posts (bloggerId, title, content, url, published, updated)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(bloggerId) DO UPDATE SET
+       title=excluded.title,
+       content=excluded.content,
+       url=excluded.url,
+       published=excluded.published,
+       updated=excluded.updated`
   );
   const insertMany = db.transaction((items: Post[]) => {
     for (const p of items) {
